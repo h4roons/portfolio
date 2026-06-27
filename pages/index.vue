@@ -2,7 +2,9 @@
 import { usePortfolio } from '~/composables/usePortfolio'
 const { profile } = usePortfolio()
 
-// Per-page SEO + JSON-LD structured data
+// No scroll-site chrome (nav/footer) on the desktop build
+definePageMeta({ layout: false })
+
 useHead({
   script: [
     {
@@ -27,14 +29,5 @@ useHead({
 </script>
 
 <template>
-  <div>
-    <HeroSection />
-    <AboutSection />
-    <SkillsSection />
-    <ExperienceSection />
-    <ProjectsSection />
-    <VolunteeringSection />
-    <EducationSection />
-    <ContactSection />
-  </div>
+  <MacDesktop />
 </template>
