@@ -45,6 +45,7 @@ export default defineNuxtConfig({
         },
         { property: 'og:locale', content: 'en_US' },
         { property: 'og:site_name', content: 'Haroon Sohail Portfolio' },
+        { property: 'og:url', content: 'https://haroonsohail.me' },
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' },
         {
@@ -60,6 +61,7 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'canonical', href: 'https://haroonsohail.me' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
           rel: 'preconnect',

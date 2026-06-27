@@ -15,7 +15,11 @@ useHead({
         email: profile.email,
         address: { '@type': 'PostalAddress', addressLocality: profile.location },
         knowsAbout: profile.domains,
-        url: 'https://www.linkedin.com/in/h4roons/',
+        url: 'https://haroonsohail.me',
+        sameAs: [
+          'https://www.linkedin.com/in/h4roons/',
+          'https://github.com/h4roons',
+        ],
       }),
     },
   ],
