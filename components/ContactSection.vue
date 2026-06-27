@@ -5,7 +5,7 @@ const { profile } = usePortfolio()
 // ── Web3Forms ────────────────────────────────────────────────
 // Get a free access key at https://web3forms.com (enter your email),
 // then paste it here. Until then, the form falls back to a mailto: handoff.
-const WEB3FORMS_ACCESS_KEY = ''
+const WEB3FORMS_ACCESS_KEY = '0c2577f6-2057-4a41-bdeb-4fed469b26a8'
 // ─────────────────────────────────────────────────────────────
 
 const form = reactive({ name: '', email: '', message: '' })
