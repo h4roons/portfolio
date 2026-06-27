@@ -3,7 +3,7 @@
 // Free + privacy-friendly (no cookies/banner). Sign up at
 // https://www.goatcounter.com, then put your site code here
 // (e.g. 'haroonsohail' for haroonsohail.goatcounter.com).
-const GOATCOUNTER_CODE = ''
+const GOATCOUNTER_CODE = 'h4roons'
 // ─────────────────────────────────────────────────────────────
 
 // Inline script runs before hydration to set the theme class,
