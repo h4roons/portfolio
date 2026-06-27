@@ -109,6 +109,11 @@ export const useWindowsStore = defineStore('windows', {
       w.x = x
       w.y = y
     },
+    resize(id: string, patch: Partial<Pick<WinState, 'x' | 'y' | 'w' | 'h'>>) {
+      const w = this.open.find((x2) => x2.id === id)
+      if (!w || w.maximized) return
+      Object.assign(w, patch)
+    },
     toggleMax(id: string) {
       const w = this.open.find((x) => x.id === id)
       if (!w) return

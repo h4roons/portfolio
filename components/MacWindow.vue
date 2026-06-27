@@ -36,6 +36,40 @@ const startDrag = (e: PointerEvent) => {
   window.addEventListener('pointermove', onMove)
   window.addEventListener('pointerup', onUp)
 }
+
+// ---- Resizing from edges/corners ----
+const MINW = 360
+const MINH = 240
+const startResize = (e: PointerEvent, dir: string) => {
+  if (props.win.maximized) return
+  e.stopPropagation()
+  store.focus(props.win.id)
+  const sx = e.clientX
+  const sy = e.clientY
+  const ox = props.win.x
+  const oy = props.win.y
+  const ow = props.win.w
+  const oh = props.win.h
+  const onMove = (ev: PointerEvent) => {
+    let x = ox
+    let y = oy
+    let w = ow
+    let h = oh
+    const dx = ev.clientX - sx
+    const dy = ev.clientY - sy
+    if (dir.includes('e')) w = Math.max(MINW, ow + dx)
+    if (dir.includes('s')) h = Math.max(MINH, oh + dy)
+    if (dir.includes('w')) { const nw = Math.max(MINW, ow - dx); x = ox + (ow - nw); w = nw }
+    if (dir.includes('n')) { const nh = Math.max(MINH, oh - dy); y = Math.max(30, oy + (oh - nh)); h = nh }
+    store.resize(props.win.id, { x, y, w, h })
+  }
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerup', onUp)
+  }
+  window.addEventListener('pointermove', onMove)
+  window.addEventListener('pointerup', onUp)
+}
 </script>
 
 <template>
@@ -52,7 +86,7 @@ const startDrag = (e: PointerEvent) => {
         <button class="light max" aria-label="Zoom" @click="store.toggleMax(win.id)"><span>+</span></button>
       </div>
       <div class="title">
-        <span class="t-ico">{{ def?.icon }}</span>
+        <MacIcon :id="win.id" :size="16" />
         <span class="t-text">{{ def?.title }}</span>
       </div>
       <div class="spacer" />
@@ -61,6 +95,17 @@ const startDrag = (e: PointerEvent) => {
     <div class="content">
       <slot />
     </div>
+
+    <template v-if="!win.maximized">
+      <span class="rz n" @pointerdown="startResize($event, 'n')" />
+      <span class="rz s" @pointerdown="startResize($event, 's')" />
+      <span class="rz e" @pointerdown="startResize($event, 'e')" />
+      <span class="rz w" @pointerdown="startResize($event, 'w')" />
+      <span class="rz ne" @pointerdown="startResize($event, 'ne')" />
+      <span class="rz nw" @pointerdown="startResize($event, 'nw')" />
+      <span class="rz se" @pointerdown="startResize($event, 'se')" />
+      <span class="rz sw" @pointerdown="startResize($event, 'sw')" />
+    </template>
   </section>
 </template>
 
@@ -138,4 +183,15 @@ const startDrag = (e: PointerEvent) => {
   border: 2px solid transparent;
   background-clip: content-box;
 }
+
+/* Resize handles */
+.rz { position: absolute; z-index: 5; }
+.rz.n { top: -3px; left: 8px; right: 8px; height: 7px; cursor: ns-resize; }
+.rz.s { bottom: -3px; left: 8px; right: 8px; height: 7px; cursor: ns-resize; }
+.rz.e { right: -3px; top: 8px; bottom: 8px; width: 7px; cursor: ew-resize; }
+.rz.w { left: -3px; top: 8px; bottom: 8px; width: 7px; cursor: ew-resize; }
+.rz.ne { top: -4px; right: -4px; width: 14px; height: 14px; cursor: nesw-resize; }
+.rz.nw { top: -4px; left: -4px; width: 14px; height: 14px; cursor: nwse-resize; }
+.rz.se { bottom: -4px; right: -4px; width: 14px; height: 14px; cursor: nwse-resize; }
+.rz.sw { bottom: -4px; left: -4px; width: 14px; height: 14px; cursor: nesw-resize; }
 </style>

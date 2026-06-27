@@ -1,70 +1,99 @@
 <script setup lang="ts">
 import { useWindowsStore, APPS } from '~/stores/windows'
 
-const emit = defineEmits<{ (e: 'open-spotlight'): void }>()
+const emit = defineEmits<{ (e: 'open-spotlight'): void; (e: 'open-launchpad'): void }>()
 const store = useWindowsStore()
 
-const items = APPS
-const els = ref<(HTMLElement | null)[]>([])
-const scales = ref<number[]>(items.map(() => 1))
-const lifts = ref<number[]>(items.map(() => 0))
+// Dock entries = Launchpad + apps + a trailing Spotlight launcher
+const entries = [
+  { id: '__launchpad', title: 'Launchpad', icon: '🚀', kind: 'launchpad' as const },
+  ...APPS.map((a) => ({ id: a.id, title: a.title, icon: a.icon, kind: 'app' as const })),
+  { id: '__spotlight', title: 'Spotlight', icon: '🔍', kind: 'spotlight' as const },
+]
 
-const RANGE = 110
-const BOOST = 0.85
+const BASE = 48 // resting icon box width (px)
+const MAX = 96 // magnified width
+const RANGE = 130 // px of cursor influence on each side
+const EXTRA = MAX - BASE
 
-const onMove = (e: PointerEvent) => {
-  els.value.forEach((el, i) => {
+const els: (HTMLElement | null)[] = []
+const centers: number[] = [] // resting center-x of each icon (viewport coords)
+const widths = ref<number[]>(entries.map(() => BASE))
+
+const setEl = (el: Element | null, i: number) => {
+  els[i] = el as HTMLElement | null
+}
+
+const measure = () => {
+  // Measure at rest so magnification never feeds back on itself
+  els.forEach((el, i) => {
     if (!el) return
     const r = el.getBoundingClientRect()
-    const center = r.left + r.width / 2
-    const d = Math.abs(e.clientX - center)
-    const f = Math.max(0, 1 - d / RANGE)
-    scales.value[i] = 1 + BOOST * f
-    lifts.value[i] = -16 * f
+    centers[i] = r.left + r.width / 2
+  })
+}
+
+const onMove = (e: PointerEvent) => {
+  widths.value = centers.map((cx) => {
+    const d = Math.abs(e.clientX - cx)
+    if (d >= RANGE) return BASE
+    // smooth cosine falloff: 1 at the cursor, 0 at RANGE
+    const f = (Math.cos((d / RANGE) * Math.PI) + 1) / 2
+    return BASE + EXTRA * f
   })
 }
 const reset = () => {
-  scales.value = items.map(() => 1)
-  lifts.value = items.map(() => 0)
+  widths.value = entries.map(() => BASE)
 }
 
 const bouncing = ref<number | null>(null)
-const launch = (id: string, i: number) => {
+const activate = (entry: (typeof entries)[number], i: number) => {
+  if (entry.kind === 'spotlight') return emit('open-spotlight')
+  if (entry.kind === 'launchpad') return emit('open-launchpad')
   bouncing.value = i
   window.setTimeout(() => (bouncing.value = null), 600)
-  store.openApp(id)
+  store.openApp(entry.id)
 }
+const iconId = (entry: (typeof entries)[number]) =>
+  entry.kind === 'app' ? entry.id : entry.kind
+
+onMounted(() => {
+  requestAnimationFrame(measure)
+  window.addEventListener('resize', () => {
+    reset()
+    requestAnimationFrame(measure)
+  })
+})
 </script>
 
 <template>
   <div class="dock-wrap">
     <div class="dock" @pointermove="onMove" @pointerleave="reset">
-      <button
-        v-for="(app, i) in items"
-        :key="app.id"
-        :ref="(el) => { els[i] = el as HTMLElement }"
-        class="dock-item"
-        :class="{ bounce: bouncing === i }"
-        :style="{ transform: `translateY(${lifts[i]}px) scale(${scales[i]})` }"
-        @click="launch(app.id, i)"
-      >
-        <span class="tip">{{ app.title }}</span>
-        <span class="glyph">{{ app.icon }}</span>
-        <span class="run" :class="{ on: store.isOpen(app.id) }" />
-      </button>
-
-      <span class="divider" />
-
-      <button
-        :ref="(el) => { els[items.length] = el as HTMLElement }"
-        class="dock-item"
-        :style="{ transform: `translateY(${lifts[items.length] || 0}px) scale(${scales[items.length] || 1})` }"
-        @pointermove="onMove"
-        @click="emit('open-spotlight')"
-      >
-        <span class="tip">Spotlight</span>
-        <span class="glyph">🔍</span>
-      </button>
+      <template v-for="(entry, i) in entries" :key="entry.id">
+        <span v-if="entry.kind === 'spotlight'" class="divider" />
+        <button
+          :ref="(el) => setEl(el, i)"
+          class="dock-item"
+          :class="{ bounce: bouncing === i }"
+          :style="{ width: widths[i] + 'px' }"
+          @click="activate(entry, i)"
+        >
+          <span class="tip">{{ entry.title }}</span>
+          <span
+            class="glyph"
+            :style="{
+              transform: `translateY(${-(widths[i] - BASE) * 0.18}px) scale(${widths[i] / BASE})`,
+            }"
+          >
+            <MacIcon :id="iconId(entry)" :size="40" />
+          </span>
+          <span
+            v-if="entry.kind === 'app'"
+            class="run"
+            :class="{ on: store.isOpen(entry.id) }"
+          />
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -83,38 +112,41 @@ const launch = (id: string, i: number) => {
   pointer-events: auto;
   display: flex;
   align-items: flex-end;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: 4px;
+  padding: 6px 10px;
   border-radius: 20px;
   background: rgba(40, 44, 54, 0.45);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: 0 18px 50px -10px rgba(0, 0, 0, 0.6);
-  max-width: 96vw;
-  overflow-x: auto;
-  scrollbar-width: none;
+  max-width: 98vw;
+  /* overflow MUST stay visible so magnified icons can rise above the dock */
+  overflow: visible;
 }
-.dock::-webkit-scrollbar { display: none; }
 .dock-item {
   position: relative;
   flex: 0 0 auto;
-  width: 50px;
-  height: 50px;
-  display: grid;
-  place-items: center;
-  transform-origin: bottom center;
-  transition: transform 0.12s ease-out;
+  height: 48px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  /* width is animated inline; transition keeps it buttery */
+  transition: width 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .glyph {
-  font-size: 38px;
-  line-height: 1;
-  filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.45));
+  display: block;
+  transform-origin: bottom center;
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 .run {
   position: absolute;
-  bottom: -5px; left: 50%;
-  width: 4px; height: 4px; border-radius: 50%;
+  bottom: -5px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
   background: transparent;
   transform: translateX(-50%);
 }
@@ -122,12 +154,12 @@ const launch = (id: string, i: number) => {
 .divider {
   width: 1px;
   align-self: stretch;
-  margin: 6px 4px;
+  margin: 6px 5px;
   background: rgba(255, 255, 255, 0.18);
 }
 .tip {
   position: absolute;
-  top: -34px;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   white-space: nowrap;
@@ -142,13 +174,14 @@ const launch = (id: string, i: number) => {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .dock-item:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
-.bounce { animation: dock-bounce 0.55s ease; }
+.bounce { animation: dock-bounce 0.6s ease; }
 @keyframes dock-bounce {
-  0%, 100% { } /* base transform comes from inline style */
-  30% { margin-bottom: 22px; }
-  60% { margin-bottom: 6px; }
+  0%, 100% { margin-bottom: 0; }
+  35% { margin-bottom: 26px; }
+  65% { margin-bottom: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .bounce { animation: none; }
+  .dock-item, .glyph { transition: none; }
 }
 </style>

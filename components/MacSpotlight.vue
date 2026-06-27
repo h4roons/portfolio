@@ -66,7 +66,7 @@ const onKey = (e: KeyboardEvent) => {
             @mouseenter="sel = i"
             @click="run(a)"
           >
-            <span class="r-ico">{{ a.icon }}</span>
+            <MacIcon :id="a.id" :size="26" />
             <span class="r-title">{{ a.title }}</span>
             <span class="r-kind">{{ a.type === 'link' ? 'Link' : 'Application' }}</span>
           </li>
