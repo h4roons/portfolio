@@ -2,9 +2,16 @@
 import { usePortfolio } from '~/composables/usePortfolio'
 const { profile } = usePortfolio()
 
+// ── Web3Forms ────────────────────────────────────────────────
+// Get a free access key at https://web3forms.com (enter your email),
+// then paste it here. Until then, the form falls back to a mailto: handoff.
+const WEB3FORMS_ACCESS_KEY = ''
+// ─────────────────────────────────────────────────────────────
+
 const form = reactive({ name: '', email: '', message: '' })
 const errors = reactive<{ name?: string; email?: string; message?: string }>({})
-const status = ref<'idle' | 'sent'>('idle')
+const status = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
+const botcheck = ref('') // honeypot — real users never fill this
 
 const validate = () => {
   errors.name = form.name.trim() ? undefined : 'Please enter your name'
@@ -13,12 +20,60 @@ const validate = () => {
   return !errors.name && !errors.email && !errors.message
 }
 
-const submit = () => {
-  if (!validate()) return
+const mailtoFallback = () => {
   const subject = encodeURIComponent(`Portfolio enquiry from ${form.name}`)
   const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`)
   window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`
   status.value = 'sent'
+}
+
+const submit = async () => {
+  if (!validate()) return
+  if (botcheck.value) return // bot filled the honeypot — silently drop
+
+  if (!WEB3FORMS_ACCESS_KEY) {
+    mailtoFallback()
+    return
+  }
+
+  status.value = 'sending'
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: `Portfolio enquiry from ${form.name}`,
+        from_name: 'haroonsohail.me',
+        name: form.name,
+        email: form.email,
+        message: form.message,
+      }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      status.value = 'sent'
+      form.name = ''
+      form.email = ''
+      form.message = ''
+    } else {
+      status.value = 'error'
+    }
+  } catch {
+    status.value = 'error'
+  }
+}
+
+// Copy email to clipboard
+const copied = ref(false)
+const copyEmail = async () => {
+  try {
+    await navigator.clipboard.writeText(profile.email)
+    copied.value = true
+    window.setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    /* clipboard unavailable — ignore */
+  }
 }
 
 const iconPaths: Record<string, string> = {
@@ -64,10 +119,30 @@ const iconPaths: Record<string, string> = {
                 </a>
               </li>
             </ul>
+
+            <button
+              type="button"
+              @click="copyEmail"
+              class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-muted-c hover:text-base-c transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>{{ copied ? 'Copied to clipboard!' : 'Copy email address' }}</span>
+            </button>
           </div>
 
           <div class="lg:col-span-7" v-reveal="120">
             <div class="space-y-5">
+              <!-- Honeypot: hidden from real users, catches bots -->
+              <input
+                v-model="botcheck"
+                type="checkbox"
+                tabindex="-1"
+                autocomplete="off"
+                aria-hidden="true"
+                class="hidden"
+              />
               <div>
                 <label for="c-name" class="block text-sm font-medium text-muted-c mb-1.5">Name</label>
                 <input id="c-name" v-model="form.name" type="text" autocomplete="name"
@@ -92,14 +167,20 @@ const iconPaths: Record<string, string> = {
                 <p v-if="errors.message" class="mt-1.5 text-sm text-faint-c">{{ errors.message }}</p>
               </div>
 
-              <button type="button" @click="submit"
-                class="group inline-flex items-center gap-2 px-6 py-3 rounded-xl btn-accent font-semibold">
-                Send message
-                <svg class="transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              <button type="button" @click="submit" :disabled="status === 'sending'"
+                class="group inline-flex items-center gap-2 px-6 py-3 rounded-xl btn-accent font-semibold disabled:opacity-70 disabled:cursor-not-allowed">
+                <svg v-if="status === 'sending'" class="animate-spin-slow" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>
+                {{ status === 'sending' ? 'Sending…' : 'Send message' }}
+                <svg v-if="status !== 'sending'" class="transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
               </button>
 
-              <p v-if="status === 'sent'" class="text-sm text-base-c">
-                Your mail client should now be open with the message ready to send.
+              <p v-if="status === 'sent'" class="flex items-center gap-2 text-sm text-base-c">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" :stroke="'rgb(var(--acc-2))'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Thanks — your message is on its way. I'll get back to you soon.
+              </p>
+              <p v-else-if="status === 'error'" class="text-sm text-faint-c">
+                Something went wrong sending that. Please email me directly at
+                <a :href="`mailto:${profile.email}`" class="text-base-c underline">{{ profile.email }}</a>.
               </p>
             </div>
           </div>

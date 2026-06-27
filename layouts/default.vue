@@ -6,10 +6,12 @@
     </div>
     <!-- Ambient ember particles rising -->
     <EmberParticles />
+    <ScrollProgress />
     <SiteNav />
     <main class="flex-1">
       <slot />
     </main>
     <SiteFooter />
+    <BackToTop />
   </div>
 </template>
