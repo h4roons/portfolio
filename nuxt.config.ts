@@ -46,8 +46,19 @@ export default defineNuxtConfig({
         { property: 'og:locale', content: 'en_US' },
         { property: 'og:site_name', content: 'Haroon Sohail Portfolio' },
         { property: 'og:url', content: 'https://haroonsohail.me' },
+        { property: 'og:image', content: 'https://haroonsohail.me/og-image.png' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        {
+          property: 'og:image:alt',
+          content: 'Muhammad Haroon Sohail — Software Engineer',
+        },
         // Twitter
         { name: 'twitter:card', content: 'summary_large_image' },
+        {
+          name: 'twitter:image',
+          content: 'https://haroonsohail.me/og-image.png',
+        },
         {
           name: 'twitter:title',
           content: 'Muhammad Haroon Sohail — Software Engineer',
