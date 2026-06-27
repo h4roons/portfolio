@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(./node_modules/.bin/nuxt generate *)",
-      "Bash(node ./node_modules/nuxi/bin/nuxi.mjs generate)",
-      "Bash(npm install *)"
-    ]
-  }
-}
