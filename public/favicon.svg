@@ -1,5 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <rect width="32" height="32" rx="7" fill="#08090b"/>
-  <rect x="3" y="3" width="26" height="26" rx="5" fill="none" stroke="#ffffff" stroke-opacity="0.15"/>
-  <text x="16" y="22" font-family="monospace" font-size="14" font-weight="700" fill="#f0f2f6" text-anchor="middle">AA</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="0.55" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/>
+  <text x="32" y="34" text-anchor="middle" dominant-baseline="central"
+    font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-weight="800"
+    font-size="30" letter-spacing="-1.5" fill="#ffffff">HS</text>
 </svg>
