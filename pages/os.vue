@@ -2,10 +2,16 @@
 import { usePortfolio } from '~/composables/usePortfolio'
 const { profile } = usePortfolio()
 
-// Per-page SEO + JSON-LD structured data
+// No classic nav/footer chrome on the desktop experience
+definePageMeta({ layout: false })
+
 useHead({
-  link: [{ rel: 'canonical', href: 'https://haroonsohail.me' }],
-  meta: [{ property: 'og:url', content: 'https://haroonsohail.me' }],
+  title: 'Muhammad Haroon Sohail — macOS Portfolio',
+  link: [{ rel: 'canonical', href: 'https://haroonsohail.me/os' }],
+  meta: [
+    { property: 'og:url', content: 'https://haroonsohail.me/os' },
+    { property: 'og:title', content: 'Muhammad Haroon Sohail — macOS Portfolio' },
+  ],
   script: [
     {
       type: 'application/ld+json',
@@ -18,10 +24,7 @@ useHead({
         address: { '@type': 'PostalAddress', addressLocality: profile.location },
         knowsAbout: profile.domains,
         url: 'https://haroonsohail.me',
-        sameAs: [
-          'https://www.linkedin.com/in/h4roons/',
-          'https://github.com/h4roons',
-        ],
+        sameAs: ['https://www.linkedin.com/in/h4roons/', 'https://github.com/h4roons'],
       }),
     },
   ],
@@ -29,14 +32,5 @@ useHead({
 </script>
 
 <template>
-  <div>
-    <HeroSection />
-    <AboutSection />
-    <SkillsSection />
-    <ExperienceSection />
-    <ProjectsSection />
-    <VolunteeringSection />
-    <EducationSection />
-    <ContactSection />
-  </div>
+  <MacDesktop />
 </template>

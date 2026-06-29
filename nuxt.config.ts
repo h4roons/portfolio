@@ -45,7 +45,6 @@ export default defineNuxtConfig({
         },
         { property: 'og:locale', content: 'en_US' },
         { property: 'og:site_name', content: 'Haroon Sohail Portfolio' },
-        { property: 'og:url', content: 'https://haroonsohail.me' },
         { property: 'og:image', content: 'https://haroonsohail.me/og-image.png' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
@@ -74,7 +73,6 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/favicon-96.png' },
         { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
-        { rel: 'canonical', href: 'https://haroonsohail.me' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         {
           rel: 'preconnect',
@@ -97,7 +95,7 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: true,
-      routes: ['/'],
+      routes: ['/', '/os'],
     },
   },
 })
